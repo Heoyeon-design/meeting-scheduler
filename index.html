@@ -441,7 +441,17 @@
   .cal.allday .timecol{font-size:13px;font-weight:700;color:var(--gray-800)}
   .slot.sel{
     outline:none;
-    box-shadow:inset 0 0 0 2.5px var(--blue-500), 0 6px 18px rgba(49,130,246,.28);
+    box-shadow:
+      inset 0 0 0 3px #fff,
+      0 0 0 2px var(--blue-500),
+      0 8px 22px rgba(49,130,246,.4);
+    z-index:6;
+  }
+  .slot.dead.sel{
+    box-shadow:
+      inset 0 0 0 2.5px var(--gray-600),
+      0 0 0 2px var(--gray-600),
+      0 6px 16px rgba(0,0,0,.14);
   }
   td{padding:0}
 
