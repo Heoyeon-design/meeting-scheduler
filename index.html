@@ -1001,6 +1001,21 @@ const PEOPLE = ['jy','sh','mj','se','dh','ha'].map((id,i)=>{
 });
 
 const STATE = {duration:60, reqStatus:new Map(), reqCounter:0, alldayStart:9, alldayEnd:18};
+
+/* auto-derive an availability note from HARD constraints */
+function autoNote(personId){
+  const hard = HARD[personId] || [];
+  if(hard.length === 0) return [{t:'특이사항 없음', w:false}];
+  const dayCount = {};
+  hard.forEach(k=>{
+    const d = k.split('-')[0];
+    dayCount[d] = (dayCount[d]||0) + 1;
+  });
+  const busyDays = Object.entries(dayCount).filter(([,c])=>c>=3).map(([d])=>d);
+  if(busyDays.length) return [{t:`${busyDays.join('·')}요일 일정 많음`, w:true}];
+  if(hard.length <= 2) return [{t:'특이사항 없음', w:false}];
+  return [{t:'일부 시간 바쁨', w:false}];
+}
 let lastPanelInfo = null;
 function rerenderPanel(){ if(lastPanelInfo) showPanel(lastPanelInfo); }
 function getReqStatus(info, personId){ return STATE.reqStatus.get(`${info.key}::${personId}`) || null; }
@@ -1771,7 +1786,7 @@ function openDirectory(){
         const id = b.dataset.id;
         const dir = DIRECTORY.find(x=>x.id===id);
         if(!dir || PEOPLE.some(p=>p.id===id)) return;
-        PEOPLE.push({...dir, role:'opt', note:[]});
+        PEOPLE.push({...dir, role:'opt', note:autoNote(dir.id)});
         renderPeople(); updateHint();
         render();
       };
