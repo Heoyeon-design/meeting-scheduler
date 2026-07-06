@@ -441,17 +441,20 @@
   .cal.allday .timecol{font-size:13px;font-weight:700;color:var(--gray-800)}
   .slot.sel{
     outline:none;
+    transform:scale(1.1);
     box-shadow:
       inset 0 0 0 3px #fff,
-      0 0 0 2px var(--blue-500),
-      0 8px 22px rgba(49,130,246,.4);
-    z-index:6;
+      0 0 0 3px var(--blue-500),
+      0 12px 28px rgba(49,130,246,.5);
+    z-index:10;
   }
   .slot.dead.sel{
+    transform:scale(1.1);
     box-shadow:
-      inset 0 0 0 2.5px var(--gray-600),
-      0 0 0 2px var(--gray-600),
-      0 6px 16px rgba(0,0,0,.14);
+      inset 0 0 0 2.5px var(--gray-700),
+      0 0 0 2.5px var(--gray-700),
+      0 10px 22px rgba(0,0,0,.18);
+    z-index:10;
   }
   td{padding:0}
 
@@ -1002,20 +1005,26 @@ const PEOPLE = ['jy','sh','mj','se','dh','ha'].map((id,i)=>{
 
 const STATE = {duration:60, reqStatus:new Map(), reqCounter:0, alldayStart:9, alldayEnd:18};
 
-/* auto-derive an availability note from HARD constraints */
+/* preference-style note auto-derived from HARD constraints */
 function autoNote(personId){
   const hard = HARD[personId] || [];
-  if(hard.length === 0) return [{t:'특이사항 없음', w:false}];
+  if(hard.length <= 2) return [{t:'특이사항 없음', w:false}];
+
   const dayCount = {};
   hard.forEach(k=>{
     const d = k.split('-')[0];
     dayCount[d] = (dayCount[d]||0) + 1;
   });
-  const busyDays = Object.entries(dayCount).filter(([,c])=>c>=3).map(([d])=>d);
-  if(busyDays.length) return [{t:`${busyDays.join('·')}요일 일정 많음`, w:true}];
-  if(hard.length <= 2) return [{t:'특이사항 없음', w:false}];
-  return [{t:'일부 시간 바쁨', w:false}];
+  const domDay = Object.entries(dayCount).find(([,c])=>c>=3);
+  if(domDay) return [{t:`${domDay[0]}요일 회의 회피`, w:true}];
+
+  const morn = hard.filter(k=> +k.split('-')[1] < 12).length;
+  const aft = hard.length - morn;
+  if(morn >= aft*2) return [{t:'오후 회의 선호', w:false}];
+  if(aft >= morn*2) return [{t:'오전 회의 선호', w:false}];
+  return [{t:'짧은 회의 선호', w:false}];
 }
+
 let lastPanelInfo = null;
 function rerenderPanel(){ if(lastPanelInfo) showPanel(lastPanelInfo); }
 function getReqStatus(info, personId){ return STATE.reqStatus.get(`${info.key}::${personId}`) || null; }
