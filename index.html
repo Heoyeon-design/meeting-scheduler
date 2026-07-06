@@ -461,19 +461,6 @@
       0 12px 24px rgba(0,0,0,.2);
     z-index:10;
   }
-  /* small check badge on selected cell corner */
-  .slot.sel::after{
-    content:'';
-    position:absolute;
-    top:-6px;right:-6px;
-    width:18px;height:18px;border-radius:50%;
-    background:var(--blue-500);
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12l5 5L20 7'/></svg>");
-    background-repeat:no-repeat;background-position:center;background-size:11px;
-    box-shadow:0 2px 6px rgba(49,130,246,.5);
-    z-index:11;
-  }
-  .slot.dead.sel::after{background-color:var(--gray-700);box-shadow:0 2px 6px rgba(0,0,0,.3)}
   td{padding:0}
 
   /* detail panel */
@@ -1871,6 +1858,7 @@ function sendInvites(info){
       if(cbtn){
         cbtn.disabled = true;
         cbtn.style.background = 'var(--green)';
+        cbtn.style.color = '#fff';
         cbtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg> 초대 발송 완료`;
       }
     };
