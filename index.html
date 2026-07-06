@@ -416,9 +416,8 @@
   .slot.lit:focus-visible{outline:2.5px solid var(--blue-500);outline-offset:2px}
   .slot.dead{
     background:var(--gray-100);
-    cursor:pointer;
+    cursor:default;
     position:relative;
-    transition:transform .14s var(--ease), box-shadow .18s var(--ease), background .15s var(--ease);
   }
   .slot.dead::before,
   .slot.dead::after{
@@ -427,8 +426,6 @@
   }
   .slot.dead::before{transform:translate(-50%,-50%) rotate(45deg)}
   .slot.dead::after{transform:translate(-50%,-50%) rotate(-45deg)}
-  .slot.dead:hover{background:var(--gray-150);transform:scale(1.05);box-shadow:0 4px 12px rgba(0,0,0,.06);z-index:5}
-  .slot.dead:focus-visible{outline:2px solid var(--gray-400);outline-offset:2px}
   .slot.void{
     background:var(--gray-50);
     cursor:default;
@@ -448,17 +445,6 @@
       inset 0 0 0 3px #fff,
       0 0 0 3px var(--blue-500),
       0 14px 30px rgba(49,130,246,.55);
-    z-index:10;
-  }
-  .slot.dead.sel,
-  .slot.dead.sel:hover,
-  .slot.dead.sel:focus-visible{
-    outline:none;
-    transform:scale(1.12);
-    box-shadow:
-      inset 0 0 0 3px #fff,
-      0 0 0 3px var(--gray-700),
-      0 12px 24px rgba(0,0,0,.2);
     z-index:10;
   }
   td{padding:0}
@@ -1267,9 +1253,9 @@ function buildGrid(){
                    aria-label="${d.k}요일 ${timeLabel} 시 회의 길이가 안 맞아요"
                    title="회의가 이 시간에 시작하면 종료가 안 맞아요"></div></td>`;
         } else {
-          html+=`<td><div class="slot dead" tabindex="0" role="button"
-                   data-day="${d.k}" data-hour="${h}" data-dead="1"
-                   aria-label="${d.k}요일 ${timeLabel} 필수 인원 불가, 조정 요청 가능"></div></td>`;
+          html+=`<td><div class="slot dead"
+                   aria-label="${d.k}요일 ${timeLabel} 필수 인원 불가"
+                   title="필수 인원이 불가한 시간이에요"></div></td>`;
         }
       }else{
         candidates++;
@@ -1309,7 +1295,7 @@ function buildGrid(){
     candMore.hidden = true;
   }
 
-  g.querySelectorAll('.slot.lit, .slot.dead').forEach(el=>{
+  g.querySelectorAll('.slot.lit').forEach(el=>{
     const trigger = ()=>{
       g.querySelectorAll('.slot').forEach(s=>s.classList.remove('sel'));
       el.classList.add('sel');
