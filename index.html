@@ -535,8 +535,10 @@
   }
   .confirm:hover{background:var(--blue-600)}
   .confirm:active{transform:scale(.97)}
-  .confirm:disabled{background:var(--green);cursor:default;transform:none}
+  .confirm:disabled{background:var(--gray-100);color:var(--gray-500);cursor:not-allowed;transform:none}
+  .confirm:disabled:hover{background:var(--gray-100)}
   .confirm svg{width:16px;height:16px}
+  .confirm .lock{width:15px;height:15px}
   .p-actions .side{font-size:12.5px;color:var(--gray-500);font-weight:500}
 
   /* ---------- directory picker ---------- */
@@ -1337,6 +1339,25 @@ function buildGrid(){
 /* ---------------- detail panel ---------------- */
 function reqKey(info, personId){ return `${info.key}::${personId}`; }
 
+/* whether the confirm button should be enabled */
+function confirmGate(info){
+  const blocked = [...(info.reqBlocked||[]), ...(info.optBlocked||[])];
+  if(blocked.length === 0) return {disabled:false, hint:'확정하면 캘린더 초대가 자동으로 발송돼요', lock:false};
+  const anyPending = blocked.some(p => getReqStatus(info, p.id) === 'pending');
+  const anyRejected = blocked.some(p => getReqStatus(info, p.id) === 'rejected');
+  const unrequested = blocked.filter(p => !getReqStatus(info, p.id));
+  if(anyPending) return {disabled:true, hint:'응답을 기다리는 중이에요', lock:true};
+  if(anyRejected) return {disabled:true, hint:'일부 인원이 거절했어요 · 다른 시간을 골라보세요', lock:true};
+  if(unrequested.length > 0){
+    const names = unrequested.map(p=>p.name).join('·');
+    return {disabled:true, hint:`${names}님께 조정 요청을 먼저 보내주세요`, lock:true};
+  }
+  return {disabled:false, hint:'모두 수락했어요 · 확정하면 초대가 발송돼요', lock:false};
+}
+
+const CONFIRM_ARROW_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+const CONFIRM_LOCK_SVG = `<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+
 function personChip(p, kind, info){
   /* kind: 'ok' | 'soft' | 'blocked' | 'reqblocked' */
   const status = getReqStatus(info, p.id);
@@ -1408,8 +1429,15 @@ function showPanel(info){
       </div>
       ${groups.join('')}
       <div class="p-actions">
-        <span class="side">조정 요청을 보내면 상대방이 수락·거절을 결정해요</span>
+        <span class="side">${confirmGate(info).hint}</span>
+        <button class="confirm" type="button" ${confirmGate(info).disabled?'disabled':''}>
+          ${confirmGate(info).lock ? CONFIRM_LOCK_SVG : ''}
+          이 시간으로 확정하기
+          ${confirmGate(info).lock ? '' : CONFIRM_ARROW_SVG}
+        </button>
       </div>`;
+    const cDead = P.querySelector('.confirm');
+    if(cDead && !confirmGate(info).disabled) cDead.onclick = ()=> openModal(info);
   } else {
     /* normal variant */
     let line;
@@ -1446,14 +1474,7 @@ function showPanel(info){
         <div class="avs">${noPeople.map(p=>personChip(p,'blocked',info)).join('')}</div>
       </div>`);
 
-    /* gate confirm based on request response state */
-    const relevant = [...info.softViol, ...info.optBlocked];
-    const anyPending = relevant.some(p => getReqStatus(info, p.id) === 'pending');
-    const anyRejected = relevant.some(p => getReqStatus(info, p.id) === 'rejected');
-    let hint = '확정하면 캘린더 초대가 자동으로 발송돼요';
-    let confirmDisabled = false;
-    if(anyPending){ hint = '응답을 기다리는 중이에요'; confirmDisabled = true; }
-    else if(anyRejected){ hint = '일부 인원이 거절했어요 · 다른 시간을 골라보세요'; confirmDisabled = true; }
+    const gate = confirmGate(info);
 
     P.innerHTML = `
       <div class="p-top">
@@ -1463,14 +1484,15 @@ function showPanel(info){
       <div class="p-line">${line}</div>
       ${groups.join('')}
       <div class="p-actions">
-        <span class="side">${hint}</span>
-        <button class="confirm" type="button" ${confirmDisabled?'disabled':''}>
+        <span class="side">${gate.hint}</span>
+        <button class="confirm" type="button" ${gate.disabled?'disabled':''}>
+          ${gate.lock ? CONFIRM_LOCK_SVG : ''}
           이 시간으로 확정하기
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          ${gate.lock ? '' : CONFIRM_ARROW_SVG}
         </button>
       </div>`;
     const c = P.querySelector('.confirm');
-    if(c && !confirmDisabled) c.onclick = ()=> openModal(info);
+    if(c && !gate.disabled) c.onclick = ()=> openModal(info);
   }
 
   /* wire request chips */
